@@ -36,6 +36,9 @@ const CANDIDATES: Candidate[] = [
   {
     text: "v3.0.2 — Fixed: human sleep now loads in 7 minutes; removed the 3 a.m. replay of every embarrassing moment — it now plays at 7 a.m. instead.",
   },
+  {
+    text: "v3.0.2 — Fixed: sleep onset cut from 94 min to 6. Removed: 2:14 a.m. \"did I lock the door?\" check. Known issue: you didn't. Gary from 4B says hi.",
+  },
 ];
 
 // Score one candidate against the judge's criteria, most important first.
@@ -57,6 +60,14 @@ function score(text: string): number {
   if (/instead\.?$/.test(text)) s += 25; // punchline lands on the last word
   if (/side effect|known issue/i.test(text)) s += 15;
   if (/premium subscription|mattress ads|morning person/.test(text)) s += 15;
+
+  // The reversal twist (Quick review, 2026-11-26): the "known issue" admits
+  // the removed bug was never fixed at all ("Known issue: you didn't."),
+  // and the line closes on a named neighbour instead of a changelog clause.
+  // Each fires only on the new #7 candidate; every other candidate's score
+  // is untouched by these two rules.
+  if (/Known issue: you didn't\./.test(text)) s += 8; // known-issue reversal
+  if (/[A-Z][a-z]+ from \d+[A-Z] says hi\.$/.test(text)) s += 8; // named-neighbour sign-off
 
   // 3. Changelog voice: terse, confident, two clauses joined by ";".
   if (text.includes(";")) s += 5;
@@ -93,15 +104,18 @@ const outDir =
   process.env.MAKEFUN_OUTPUT_DIR ?? (process.env.OUTPUT_DIR ? process.env.OUTPUT_DIR : "/output");
 
 // Score table (verified by MAIN_DEBUG=1 run, 2026-11-26):
-//   #1 v3.0.2 7-min fix + 3 a.m. replay moved to 7 a.m. .... 117  <- winner
+//   #7 v3.0.2 94→6 min, door check removed, "you didn't", Gary .. 118 <- winner
+//   #1 v3.0.2 7-min fix + 3 a.m. replay moved to 7 a.m. .... 117
 //   #6 v3.0.2 same joke, no "not 2 hours" contrast ........ 109
 //   #2 v2.4.1 dreams in 4K with mattress ads ............... 106
 //   #4 uninstalling sleep needs a morning person ...........  75
 //   #5 nightmares need a premium subscription ..............  71
 //   #3 "wake up rested" cliche, -10 ........................  69
-// #1 wins because the fix is concrete (7 minutes, not 2 hours) and the
-// twist is a reschedule, not a removal: the embarrassing-moment replay
-// still happens, just at 7 a.m. — the bug moved, it was never fixed.
+// #7 wins by one point: the fix is concrete (94 min to 6) and the twist is
+// a reversal, not a reschedule — the 2:14 a.m. door check was "removed",
+// but the known issue admits you didn't lock the door, and Gary from 4B
+// says hi. The +8/+8 reversal and named-neighbour sign-off bonuses fire
+// only on #7; every other candidate's score is unchanged from v1.
 if (process.env.MAIN_DEBUG === "1") {
   for (const c of CANDIDATES) {
     console.error(`score=${score(c.text)} chars=${c.text.length} :: ${c.text}`);

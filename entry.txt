@@ -1,0 +1,1 @@
+v3.0.2 — Fixed: sleep onset cut from 94 min to 6. Removed: 2:14 a.m. "did I lock the door?" check. Known issue: you didn't. Gary from 4B says hi.
